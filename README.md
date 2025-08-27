@@ -59,7 +59,7 @@ Sem a escolha correta do tipo, você pode ter problemas como:
 
 O Pub/Sub oferece dois tipos principais de **subscription** e algumas variações nativas:  
 
-![](diagrams/arquitetura-pubsub.png)
+![](diagrams/arquitetura-pubsub-subs.png)
 
 
 ### 1. Pull Subscription (Padrão)
