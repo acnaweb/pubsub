@@ -1,0 +1,100 @@
+@startuml arquitetura-pubsub
+skinparam componentStyle rectangle
+skinparam wrapWidth 200
+skinparam maxMessageSize 200
+
+title Arquitetura de Subscriptions no Google Cloud Pub/Sub
+footer Disponível em: https://github.com/acnaweb/pubsub
+
+node "Produtores" as producers {
+  component "Serviço A\n(e-commerce)" as svcA
+  component "Serviço B\n(IoT)" as svcB
+}
+
+queue "Tópico Pub/Sub\nprojects/…/topics/tp_events" as topic
+
+producers --> topic : publish(message)
+
+package "Subscriptions" {
+  queue "sub-pull" as sub_pull
+  queue "sub-push" as sub_push
+  queue "sub-bigquery" as sub_bq
+  queue "sub-gcs" as sub_gcs
+  queue "sub-main" as sub_main
+  queue "sub-dlq" as sub_dlq
+}
+
+' Destinos/Consumidores
+node "Consumidor Pull" as pull_cons {
+  component "Worker(s)\n(GCE/GKE/Cloud Run)" as workers
+}
+
+node "API HTTP" as api {
+  component "Endpoint HTTPS\n(Cloud Run/Functions/API GW)" as https_ep
+}
+
+database "BigQuery" as bq {
+  collections "Tabela:\nanalytics.events" as bq_table
+}
+
+node "Cloud Storage" as gcs {
+  artifact "Bucket:\nraw-events/\n(Avro/Parquet/JSON)" as gcs_bucket
+}
+
+node "Dataflow/Beam" as df {
+  component "Pipeline Streaming\n(Beam/Dataflow)" as beam
+}
+
+node "DLQ" as dlq {
+  queue "Tópico DLQ\ntp_events_dlq" as tp_dlq
+}
+
+' Ligações das subscriptions
+topic --> sub_pull
+topic --> sub_push
+topic --> sub_bq
+topic --> sub_gcs
+topic --> sub_main
+
+' Consumo/entrega
+sub_pull --> workers : pull + ack/nack
+sub_push --> https_ep : push HTTP POST (200 = ack)
+
+sub_bq --> bq_table : append rows
+sub_gcs --> gcs_bucket : write files (batched)
+
+' Dataflow pode ler do tópico ou da sub principal
+topic --> beam : read from topic
+sub_main --> beam : read from subscription
+
+' DLQ: mensagens com falha vão para tópico DLQ
+sub_main -[#red]-> tp_dlq : exceed maxDeliveryAttempts
+tp_dlq --> sub_dlq
+sub_dlq --> workers : investigação/reattempt
+
+' Notas
+note right of sub_push
+  Push: Pub/Sub envia para HTTPS.
+  2xx => ACK; outros => retry (backoff)
+end note
+
+note bottom of sub_pull
+  Pull: cliente controla taxa de consumo,
+  ACK confirma processamento; NACK reentrega.
+end note
+
+note right of bq_table
+  BigQuery Subscription requer schema compatível
+  e controla particionamento/clustering via config.
+end note
+
+note right of gcs_bucket
+  GCS Subscription grava em lote (tamanho/tempo),
+  formatos Avro/Parquet/JSON.
+end note
+
+note bottom of beam
+  Beam/Dataflow para transformações/ETL em streaming,
+  janelas, agregações e enriquecimentos.
+end note
+@enduml
