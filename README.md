@@ -40,7 +40,7 @@ Essa arquitetura desacopla os componentes de um sistema, garantindo escalabilida
 
 # Tipos de Subscription no Pub/Sub GCP
 
-## 1. Definição de Subscription
+## Definição de Subscription
 
 - Uma **subscription** é uma configuração que conecta um **tópico (topic)** a um **consumidor**.  
 - O Pub/Sub garante que as mensagens publicadas no tópico sejam entregues às assinaturas configuradas.  
