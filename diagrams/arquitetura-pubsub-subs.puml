@@ -1,4 +1,4 @@
-@startuml arquitetura-pubsub
+@startuml arquitetura-pubsub-subs
 skinparam componentStyle rectangle
 skinparam wrapWidth 200
 skinparam maxMessageSize 200

@@ -1,0 +1,54 @@
+@startuml sequencia
+
+title Fluxo GCP Pub/Sub — Publisher → Topic → Subscription → Consumer
+footer Disponível em: https://github.com/acnaweb/pubsub
+
+
+actor Publisher
+participant "Pub/Sub Topic\n(tp_eventos)" as Topic
+queue "Subscription Pull\n(subs_pull)" as SubPull
+queue "Subscription Push\n(subs_push)" as SubPush
+queue "Subscription BigQuery\n(subs_bq)" as SubBQ
+participant "Consumer Pull\n(app_worker)" as ConsumerPull
+participant "Endpoint Push\n(https://api.exemplo.com/hook)" as EndpointPush
+database "BigQuery Table\n(ds.events)" as BQ
+queue "DLQ\n(subs_dlq)" as DLQ
+
+== Publicação ==
+Publisher -> Topic : publish(message, attributes)
+
+== Fan-out para Subscriptions ==
+Topic -> SubPull : enfileira mensagem
+Topic -> SubPush : enfileira mensagem
+Topic -> SubBQ : enfileira mensagem
+
+== Entrega Pull ==
+group Pull (cliente controla o ritmo)
+  ConsumerPull -> SubPull : pull(n)
+  SubPull --> ConsumerPull : mensagens
+  ConsumerPull -> SubPull : ack(msg) / modAck(deadline)
+  SubPull -> DLQ : reentrega excedida? envia para DLQ
+end
+
+== Entrega Push ==
+group Push (Pub/Sub chama endpoint)
+  SubPush -> EndpointPush : HTTP POST / mensagem
+  EndpointPush -> SubPush : 2xx (ACK) ou 4xx/5xx (NACK)
+  SubPush -> DLQ : falhas repetidas? envia para DLQ
+end
+
+== BigQuery Subscription ==
+group BigQuery Write
+  SubBQ -> BQ : append(row)
+  note right of BQ
+    Esquema deve ser compatível.
+    Campos podem vir do payload
+    e dos atributos.
+  end note
+end
+
+== Observabilidade ==
+ConsumerPull -[#gray,dashed]-> Topic : métricas/monitoramento (Cloud Monitoring/Logging)
+EndpointPush -[#gray,dashed]-> SubPush : logs de entrega/latência
+
+@enduml
