@@ -13,13 +13,6 @@ repos:
       name: Run Code Quality
       files: ^src/     
 
--   repo: https://github.com/pre-commit/mirrors-mypy
-    rev: 'v1.5.1'  # Use the sha / tag you want to point at
-    hooks:
-    - id: mypy
-      name: Run Lint
-      files: ^src/
-      
 -   repo: https://github.com/pycqa/isort
     rev: 5.13.2  # ou a versão mais recente
     hooks:

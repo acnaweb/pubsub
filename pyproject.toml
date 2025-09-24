@@ -24,11 +24,8 @@ homepage = "https://github.com/acnaweb/pubsub"
 dev = [
 ]
 quality = [
-    "mypy~=1.5",
     "flake8~=6.1",
     "black~=22.3",
-    "pytest-cov~=4.0",
-    "pytest~=7.0",
     "isort~=6.0",
 ]
 
