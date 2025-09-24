@@ -1,0 +1,38 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "study-pubsub"
+version = "0.1.0"
+description = "GCP PubSub"
+readme = "README.md"
+requires-python = ">=3.9"
+authors = [
+  { name = "Antonio Carlos de Lima Júnior", email = "ac@marketmining.com.br" }
+]
+dependencies = [
+  "python-dotenv~=1.0",
+  "loguru~=0.7",
+  "google-cloud-pubsub~=2.31"
+]
+
+[project.urls]
+homepage = "https://github.com/acnaweb/pubsub"
+
+[project.optional-dependencies]
+dev = [
+]
+quality = [
+    "mypy~=1.5",
+    "flake8~=6.1",
+    "black~=22.3",
+    "pytest-cov~=4.0",
+    "pytest~=7.0",
+    "isort~=6.0",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[project.scripts]
